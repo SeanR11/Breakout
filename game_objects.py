@@ -22,6 +22,7 @@ class Player(Sprite):
         if center:
             self.set_center(center)
 
+
     def event_handler(self, event):
         super().event_handler(event)
         key = pygame.key.get_pressed()
@@ -29,6 +30,10 @@ class Player(Sprite):
             self.move_state = True
         else:
             self.move_state = False
+        if key[pygame.K_SPACE] and self.shooter and not self.shooter_timer:
+            self.shoot()
+
+
 
     def draw(self):
         super().draw()
@@ -43,15 +48,16 @@ class Player(Sprite):
                 self.shooter_timer = None
 
     def move(self, key):
-        if key[pygame.K_RIGHT] and self.box.right + 10 < self.bounds.w:
-            self.box.x += self.speed
-        if key[pygame.K_LEFT] and self.box.left - 3 > self.bounds.x:
-            self.box.x -= self.speed
+        if not self.parent.parent.popup_window:
+            if key[pygame.K_RIGHT] and self.box.right + 10 < self.bounds.w:
+                self.box.x += self.speed
+            if key[pygame.K_LEFT] and self.box.left - 3 > self.bounds.x:
+                self.box.x -= self.speed
 
     def shoot(self):
         if self.bullets_amount != 0:
             bullet = Bullet(self.window, self.parent, (0, 0))
-            bullet.update_position((self.box.centerx - bullet.box.w, self.box.y - 1))
+            bullet.update_position((self.box.centerx - bullet.box.w, self.box.y - 2))
             self.bullets.append(Bullet(self.window, self.parent, (self.box.centerx, self.box.top - 20)))
             self.update_magazine()
             self.shooter_timer = time.time()
@@ -73,7 +79,7 @@ class Player(Sprite):
 
     def update_paddle(self):
         if self.paddle_size == 0:
-                self.update_sprite((985, 870, 96, 53), (50, 30))
+            self.update_sprite((985, 870, 96, 53), (50, 30))
         elif self.paddle_size == 1:
             self.update_sprite((530, 23, 202, 53), (100, 30))
         elif self.paddle_size == 2:
@@ -177,25 +183,36 @@ class Ball(Sprite):
         return collision_detected
 
     def check_paddle_collision(self, object_rect):
+        object_box = object_rect.box
         collision_detected = False
-        if self.box.colliderect(object_rect):
+        if self.box.colliderect(object_box):
             collision_detected = True
-            offset = (self.box.centerx - object_rect.left) / 100
-            flag = 0
-            if offset > 0.5 :
-                offset = -1 - (offset - 0.5) * -2
+            offset = (self.box.centerx - object_box.left) / object_box.width
+            flag = False
+
+            if offset <= 0:
+                offset = 0
+            elif offset >= 1:
+                offset = 1
+
+            if offset < 0.5:
+                offset *= 2
+                flag = True
             else:
-                offset = offset * 2
-                flag = 1
+                offset = -1 - (offset - 0.5) * -2
+
             angle = offset * 90
             min_angle = 30
-            if offset > 0 and angle < min_angle:
-                angle = min_angle
-            elif offset < 0 and angle > -min_angle:
-                angle = -min_angle
+
+            if angle < 30:
+                if flag:
+                    angle = min_angle
+                elif -angle < min_angle:
+                    angle = -min_angle
+
             radians = math.radians(angle)
 
-            if flag == 1:
+            if flag:
                 self.dy = self.speed * -math.sin(radians)
                 self.dx = self.speed * -math.cos(radians)
             else:
@@ -203,6 +220,7 @@ class Ball(Sprite):
                 self.dx = self.speed * math.cos(radians)
 
             speed_magnitude = math.sqrt(self.dx ** 2 + self.dy ** 2)
+            self.y = object_box.y - 20
             self.dx = (self.dx / speed_magnitude*1.5) * self.speed
             self.dy = (self.dy / speed_magnitude*1.5) * self.speed
         return collision_detected
