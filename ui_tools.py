@@ -194,7 +194,7 @@ class Sprite(Tool):
         self.tool = self.data
 
     def update_position(self, new_position, center=''):
-        self.box.x, self.box.y = new_position
+        self.box.topleft = new_position
         if center:
             self.set_center(center)
 
@@ -206,7 +206,7 @@ class Sprite(Tool):
         if rotation:
             self.data = pygame.transform.rotate(self.data, rotation)
 
-        self.box.size = self.data.get_size()
+        self.box.size = self.data.get_rect().size
         self.tool = self.data
 
 
