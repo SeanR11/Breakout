@@ -154,7 +154,8 @@ class Game(Frame):
         self.load_ui()
 
     def event_handler(self, event):
-        super().event_handler(event)
+        if self.game_state != 'over':
+            super().event_handler(event)
         key = pygame.key.get_pressed()
         if not self.popup_window:
             self.game_objects['player'].event_handler(event)
@@ -163,7 +164,7 @@ class Game(Frame):
                     ball.freeze = False
         else:
             self.popup_window.event_handler(event)
-            if key[pygame.K_ESCAPE]:
+            if key[pygame.K_ESCAPE] and self.game_state != 'over':
                 self.pause_game()
                 for ball in self.balls:
                     ball.freeze = True
@@ -224,7 +225,7 @@ class Game(Frame):
                                 self.level_over_sound.play().set_volume(self.fx_volume)
                                 self.load_level()
                         return
-                if ball.check_paddle_collision(self.game_objects['player'].box):
+                if ball.check_paddle_collision(self.game_objects['player']):
                     ball.sounds['hit player'].stop()
                     ball.sounds['hit player'].play().set_volume(self.fx_volume)
 
